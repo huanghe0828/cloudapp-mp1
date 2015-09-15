@@ -1,4 +1,4 @@
-import java.io.File;
+import java.io.*;
 import java.lang.reflect.Array;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -8,7 +8,8 @@ public class MP1 {
     Random generator;
     String userName;
     String inputFileName;
-    String delimiters = " \t,;.?!-:@[](){}_*/";
+    final HashMap<String, Integer> map = new HashMap<String, Integer>();;
+    String delimiters = "\\s+|\\t|\\,|\\;|\\.|\\?|\\!|\\-|\\:|\\@|\\[|\\]|\\(|\\)|\\{|\\}|\\_|\\*|\\/";
     String[] stopWordsArray = {"i", "me", "my", "myself", "we", "our", "ours", "ourselves", "you", "your", "yours",
             "yourself", "yourselves", "he", "him", "his", "himself", "she", "her", "hers", "herself", "it", "its",
             "itself", "they", "them", "their", "theirs", "themselves", "what", "which", "who", "whom", "this", "that",
@@ -48,12 +49,42 @@ public class MP1 {
         this.userName = userName;
         this.inputFileName = inputFileName;
     }
-
+    
     public String[] process() throws Exception {
+        HashSet<String> stopList = new HashSet<String>();
+        for (String str: stopWordsArray) stopList.add(str);
+        HashMap<Integer,Integer> indices = new HashMap<Integer, Integer>();
+        for (Integer i: getIndexes()) {
+		if (!indices.containsKey(i)) indices.put(i, 0);
+		indices.put(i, indices.get(i)+1);
+	   }
         String[] ret = new String[20];
-        Arrays.fill(ret, "");
-        //TODO
-
+        
+        BufferedReader bf = new BufferedReader(new FileReader(inputFileName));
+        String inLine;
+        int line = -1;
+        while ((inLine = bf.readLine()) != null) {
+            line++;
+            while (indices.containsKey(line) && indices.get(line) > 0) {
+		        indices.put(line, indices.get(line)-1);
+                String[] tokens = inLine.toLowerCase().split(delimiters);
+                for (String token: tokens) {
+			    if (token.length() == 0) continue;
+                    if (stopList.contains(token)) continue;
+                    if (!map.containsKey(token)) map.put(token, 0);
+                    map.put(token, map.get(token)+1);
+                }
+		    }
+        }
+        PriorityQueue<String> queue = new PriorityQueue<String>(20, new Comparator<String>() {
+            @Override
+            public int compare(String a, String b) {
+			if (map.get(b) != map.get(a)) return map.get(b) - map.get(a);
+			return a.compareTo(b);
+            }
+        });
+        for (String word: map.keySet()) queue.offer(word);
+        for (int i = 0; i < ret.length; i++) ret[i] = queue.poll();
         return ret;
     }
 
