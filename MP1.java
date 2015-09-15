@@ -51,7 +51,7 @@ public class MP1 {
 
     public String[] process() throws Exception {
         String[] ret = new String[20];
-       
+        Arrays.fill(ret, "");
         //TODO
 
         return ret;
